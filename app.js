@@ -97,15 +97,16 @@ io.sockets.on("connection", function (socket) {
 	
 	socket.on("bufferdata", function (data) {
 		if (socket.room) {
-			socket.broadcast.to(socket.room).emit("newdata", [data]);
+			data = sanitize(data);
 		
-			var key = socket.room + ":buffer";
+			socket.broadcast.to(socket.room).emit("newdata", [data]);
+
 			redisClient.rpush(key, JSON.stringify(data));
 			
 			Canvas.getForRoom(socket.room, function(canvas) {
 				canvas.draw([data]);
 				
-				redisClient.llen(key, function (err, length) {
+				redisClient.llen(socket.room + ":buffer", function (err, length) {
 					if (length >= Canvas.BUF_LEN && !canvas.flushing) {
 						canvas.flush();
 					}
@@ -131,3 +132,45 @@ setInterval(function () {
 	});
 	
 }, MOUSE_UPDATE_MS);
+
+var sanitize = function (d) {
+	var sanitized = [];
+
+	for (var i = 0; i < d.length; i++) {
+		var data = d[i];
+		
+		if ("type" in data) {
+			switch (data.type) {
+				case "path":
+					break;
+					
+				case "line":
+					if (data.p.length > 3) {
+						var p = [];
+						
+						p[0] = Number(data.p[0]);
+						p[1] = Number(data.p[1]);
+						p[2] = Number(data.p[2]);
+						p[3] = Number(data.p[3]);
+						
+						if (data.p.length === 5) {
+							var ss = String(data.p[4].ss);
+							var fs = String(data.p[4].fs);
+							var lw = String(data.p[4].lw);
+							
+							p[4] = {};
+							
+							if (ss !== "") p[4].ss = ss;
+							if (fs !== "") p[4].fs = fs;
+							if (lw !== "") p[4].lw = lw;
+						}
+						
+						sanitized.push({ type: data.type, p: p });
+					}
+					break;
+			}
+		}
+	}
+	
+	return sanitized;
+};

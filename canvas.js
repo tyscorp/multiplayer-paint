@@ -145,8 +145,6 @@ Canvas.prototype.draw = function (actions) {
 	//console.log("Drawing " + actions.length + " objects...");
 	//var time = Date.now();
 	
-	actions = Canvas.sanitize(actions);
-	
 	actions.forEach(function (data) {
 		if (data) {
 			var g = canvas.getContext("2d");
@@ -205,46 +203,5 @@ Canvas.prototype.draw = function (actions) {
 	
 	canvas.buffer++;
 }
-
-Canvas.sanitize = function (d) {
-	var sanitized = [];
-
-	for (var i = 0; i < d.length; i++) {
-		var data = d[i];
-		
-		if ("type" in data) {
-			switch (data.type) {
-				case "path":
-					break;
-					
-				case "line":
-					var p = [];
-					
-					p[0] = Number(data.p[0]);
-					p[1] = Number(data.p[1]);
-					p[2] = Number(data.p[2]);
-					p[3] = Number(data.p[3]);
-					
-					if (data.p.length === 5) {
-						var ss = String(data.p[4].ss);
-						var fs = String(data.p[4].fs);
-						var lw = String(data.p[4].lw);
-						
-						p[4] = {};
-						
-						if (ss !== "") p[4].ss = ss;
-						if (fs !== "") p[4].fs = fs;
-						if (lw !== "") p[4].lw = lw;
-					}
-					
-					sanitized.push({ type: data.type, p: p });
-					
-					break;
-			}
-		}
-	}
-	
-	return sanitized;
-};
 
 module.exports = Canvas;
