@@ -1,0 +1,17 @@
+{
+	"name": "paint",
+	"description": "multiplayer paint",
+	"version": "0.0.1",
+	"private": true,
+	"dependencies": {
+		"express": "3.x",
+		"socket.io": "0.9.x",
+		"ejs": "*",
+		"less-middleware": "*",
+		"canvas": "0.13.x",
+		"redis": "0.8.x",
+		"hiredis": "0.1.x",
+		"xtend": "*",
+		"async": "*"
+	}
+}

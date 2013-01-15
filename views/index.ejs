@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="/css/style.css" type="text/css">
+		<script src="http://code.jquery.com/jquery.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="/js/jquery.mousewheel.min.js"></script>
+		<script src="/js/rgbcolor.js"></script>
+		<script src="/js/paint.js"></script>
+		<title>Multiplayer Paint!</title>
+	</head>
+	
+	<body>
+		<div id="main">
+			<canvas id="drawing" width="800px" height="600px" oncontextmenu="return false;"></canvas>
+			<canvas id="overlay" width="800px" height="600px" oncontextmenu="return false;"></canvas>
+			<input id="color" type="text" value="#000000" /> 
+		</div>
+	</body>
+</html>
