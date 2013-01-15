@@ -5,9 +5,9 @@ var redis = require("redis");
 
 var redisClient = redis.createClient();
 
-Canvas.DATA = {};
+Canvas.DATA = {}; // Where we store all of the canvases
 
-Canvas.BUF_LEN = 2048;
+Canvas.BUF_LEN = 2048; // The amount of draws before we save the canvas to redis
 
 Canvas.CANVAS_WIDTH = 800;
 Canvas.CANVAS_HEIGHT = 600;
@@ -16,10 +16,15 @@ Canvas.defaultLineWidth = 2;
 Canvas.defaultStrokeStyle = "#000";
 Canvas.defaultFillStyle = "rgba(0,0,0,1)"
 
+/**
+ * Returns a canvas given a room string
+ */
 Canvas.getForRoom = function (room, cb) {
+	// If the canvas is already in memory just return it
 	if (room in Canvas.DATA) {
 		cb(Canvas.DATA[room]);
 	}
+	// Otherwise, create a new canvas and load it
 	else {
 		var c = new Canvas(Canvas.CANVAS_WIDTH, Canvas.CANVAS_HEIGHT);
 		c.init(room);
@@ -29,19 +34,27 @@ Canvas.getForRoom = function (room, cb) {
 	}
 }
 
+/**
+ * Sets the room and inserts the canvas to the hash of canvses
+ */
 Canvas.prototype.init = function (room) {
 	this.room = room;
 	Canvas.DATA[room] = this;
 };
-	
-Canvas.prototype.load = function (cb) {
-	var canvas = this;
 
+/**
+ * Loads a canvas from redis or creates it if it doesn't exist
+ */
+Canvas.prototype.load = function (cb) {
+	var canvas = this; // preserve context
+	
+	// Try to get the canvas from redis. Reply is either null or a data URL
 	redisClient.get(canvas.room + ":canvas", function (err, reply) {
 		var img;
 		
 		var g = canvas.getContext("2d");
 		
+		// It doesn't exist in redis, fill it then save it
 		if (reply === null) {
 			g.fillStyle = "white";
 			g.fillRect(0, 0, Canvas.CANVAS_WIDTH, Canvas.CANVAS_HEIGHT);
@@ -52,17 +65,21 @@ Canvas.prototype.load = function (cb) {
 		}
 		else {
 			img = new Canvas.Image();
-			img.src = reply;
+			img.src = reply; // !! This is async in browsers but doesn't appear to be here??? wtf
 			img.onload = function () {
-				console.log("loaded!");
+				console.log("loaded!"); // I don't know why this doesn't work D:
 			};
 			g.drawImage(img, 0, 0);
 			
+			// This is to handle the case of a canvas not saved before the server exits
 			redisClient.llen(canvas.room + ":buffer", function (err, length) {
 				if (length > 0) {
+					// Someone is trying to load the canvas at the same time!
+					// I couldn't think of a better solution. It will try to load again in 100ms.
+					// Maybe emit an event "flushed"? Hmm... Will investigate.
 					if (canvas.flushing) {
 						setTimeout(function () {
-							canvas.load(); //lol
+							canvas.load();
 						}, 100);
 					}
 					else {
@@ -78,7 +95,10 @@ Canvas.prototype.load = function (cb) {
 		}
 	});
 };
-	
+
+/**
+ * Saves a canvas to redis. Quite expensive, so try not to call it a lot.
+ */
 Canvas.prototype.save = function (cb) {
 	console.log("Saving canvas: " + this.room + "...");
 	var time = Date.now();
@@ -88,18 +108,27 @@ Canvas.prototype.save = function (cb) {
 	});
 };
 
+/**
+ * Used to make sure that you can't flush more than once at a time
+ * This was happening when you sent data to draw after flushing began
+ * and before the buffer was cleared.
+ */
 Canvas.prototype.flushing = false;
 	
 Canvas.prototype.flush = function (cb) {
-	var canvas = this;
+	var canvas = this; // preserve context
 
 	canvas.flushing = true;
 	
+	// Lol asynchronous coding
 	async.series([
 		function (callback) {
 			redisClient.llen(canvas.room + ":buffer", function (err, length) {
+				// If there is data in the redis buffer and canvas.buffer is 0, then the
+				// server was started with data not saved to the canvas in redis.
+				// Redraw the data.
 				if (length > 0 && canvas.buffer === 0) {
-					redisClient.lrange(canvas.room + ":buffer", 0, -1, function (err, data) {
+					redisClient.lrange(canvas.room + ":buffer", 0, length, function (err, data) {
 						
 						for (var i = 0; i < data.length; i++) {
 							data[i] = JSON.parse(data[i]);
@@ -132,16 +161,23 @@ Canvas.prototype.flush = function (cb) {
 			});
 		}
 	], function (err, results) {
-		buffer = 0;
+		canvas.buffer = 0;
 		canvas.flushing = false;
 		if (cb) cb();
 	});
 };
 
+/**
+ * Changes since the last flush
+ */
 Canvas.prototype.buffer = 0;
 
+/**
+ * The drawing function.
+ * This is pretty much the same on the client.
+ */
 Canvas.prototype.draw = function (actions) {
-	var canvas = this;
+	var canvas = this; // preserve context
 	//console.log("Drawing " + actions.length + " objects...");
 	//var time = Date.now();
 	

@@ -13,7 +13,7 @@ $(function () {
 		$("#color").remove();
 		var main = $("#main");
 		
-		$.getJSON("/ajax/latest.json", function (response) {
+		$.getJSON("/api/latest.json", function (response) {
 			if (response.length > 0) {
 				var ul = $("<ul>");
 			
@@ -46,7 +46,7 @@ $(function () {
 		var socket  = io.connect(URI);
 		
 		var img = new Image();
-		img.src = URI + "/canvas/" + room;
+		img.src = URI + "/api/canvas/" + room;
 		
 		var liveBuffer = [];
 		
