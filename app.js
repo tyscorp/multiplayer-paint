@@ -135,7 +135,7 @@ io.sockets.on("connection", function (socket) {
 			data = sanitize([data]);
 
 			// send the data to all users
-			socket.broadcast.to(socket.room).emit("newdata", [data]);
+			socket.broadcast.to(socket.room).emit("newdata", data);
 			
 			// add the data to the buffer (only used on server restart)
 			redisClient.rpush(socket.room + ":buffer", JSON.stringify(data[0]));
