@@ -4,6 +4,7 @@ var path = require("path");
 var http = require("http");
 var redis = require("redis");
 var async = require("async");
+var moment = require("moment");
 
 var settings = require("./settings");
 var Canvas = require("./canvas");
@@ -39,7 +40,25 @@ app.configure("development", function () {
  * Index
  */
 app.get("/", function (req, res) {
-	res.render("index");
+	var latest = [];
+	
+	redisClient.zrevrange(["latest", 0, 9, "WITHSCORES"], function (err, reply) {
+		for (var i = 0; i < reply.length; i += 2) {
+			latest.push([
+				reply[i],
+				moment(Number(reply[i+1])).fromNow()
+			]);
+		}
+		
+		res.render("index", {latest: latest});
+	});
+});
+
+/**
+ * Paint
+ */
+app.get("/:id", function (req, res) {
+	res.render("paint");
 });
 
 /**
