@@ -184,7 +184,16 @@ $(function () {
 				ss = "#FFF";
 			}
 			
-			var data = { type: "line", p: [x1 + 0.5, y1 + 0.5, x2 + 0.5, y2 + 0.5, $.extend({ ss: ss, lw: lineWidth }, o)] };
+			var opt = $.extend({ ss: ss, lw: lineWidth }, o);
+			
+			if (opt.lw % 2 === 1) {
+				x1 += 0.5;
+				y1 += 0.5;
+				x2 += 0.5;
+				y2 += 0.5;
+			}
+			
+			var data = { type: "line", p: [x1, y1, x2, y2, opt] };
 			socket.emit("bufferdata", data);
 			drawData([data]);
 		}
@@ -297,7 +306,7 @@ $(function () {
 				socket.emit("mouse", mouseData);
 				Mouse.hasMoved = false;
 			}
-		}, 50);
+		}, 100);
 		
 		$("body").keypress(function (event) {
 			if (event.which >= 49 && event.which <= 57) {
