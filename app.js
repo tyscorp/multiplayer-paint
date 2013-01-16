@@ -39,6 +39,7 @@ app.configure("development", function () {
  * Index
  */
 app.get("/", function (req, res) {
+	console.log(req);
 	res.render("index");
 });
 
