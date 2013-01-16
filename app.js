@@ -5,27 +5,26 @@ var http = require("http");
 var redis = require("redis");
 var async = require("async");
 
+var settings = require("./settings");
 var Canvas = require("./canvas");
-var redisClient = redis.createClient();
+var redisClient = redis.createClient(settings.redis.port, settings.redis.host, settings.redis.options);
 var app = express();
 var server = http.createServer(app);
 var io = require("socket.io").listen(server, { log: false });
 var Image = Canvas.Image;
 
-var MOUSE_UPDATE_MS = 100;
-
 /**
  * Express configuration
  */
 app.configure(function () {
-	app.set("port", 3016);
+	app.set("port", settings.server.port);
 	app.set("views", __dirname + "/views");
 	app.set("view engine", "ejs");
 	app.use(express.favicon());
 	app.use(express.logger("dev"));
 	app.use(express.bodyParser());
 	app.use(express.methodOverride());
-	app.use(express.cookieParser("your secret here lol"));
+	app.use(express.cookieParser(settings.secret));
 	app.use(express.session());
 	app.use(app.router);
 	app.use(require("less-middleware")({ src: __dirname + "/public", compress: true, optimization: 2 }));
@@ -75,7 +74,7 @@ app.get("/api/clear/:id", function (req, res) {
 	Canvas.getForRoom(req.params.id, function(canvas) {
 		var g = canvas.getContext("2d");
 		g.fillStyle = "#FFF";
-		g.fillRect(0, 0, Canvas.CANVAS_WIDTH, Canvas.CANVAS_HEIGHT);
+		g.fillRect(0, 0, settings.canvas.width, settings.canvas.height);
 		canvas.flush();
 		res.redirect("/#" + req.params.id);
 	});
@@ -145,7 +144,7 @@ io.sockets.on("connection", function (socket) {
 
 				// if the buffer is full, flush the canvas (save to redis/clear buffer)
 				redisClient.llen(socket.room + ":buffer", function (err, length) {
-					if (length >= Canvas.BUF_LEN && !canvas.flushing) {
+					if (length >= settings.buffer_length && !canvas.flushing) {
 						canvas.flush();
 					}
 				});
@@ -158,7 +157,7 @@ io.sockets.on("connection", function (socket) {
 });
 
 /**
- * Every MOUSE_UPDATE_MS ms, get the rooms for which the mice have been updated
+ * Every mouse_update_ms ms, get the rooms for which the mice have been updated
  * since the last interval then push that data to everyone in the relative room
  */
 setInterval(function () {
@@ -173,7 +172,7 @@ setInterval(function () {
 		});
 	});
 
-}, MOUSE_UPDATE_MS);
+}, settings.mouse_update_ms);
 
 /**
  * Sanitize drawing data

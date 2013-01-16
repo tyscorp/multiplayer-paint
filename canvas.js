@@ -2,19 +2,15 @@ var Canvas = require("canvas");
 var extend = require("xtend");
 var async = require("async");
 var redis = require("redis");
+var settings = require("./settings");
 
-var redisClient = redis.createClient();
+var redisClient = redis.createClient(settings.redis.port, settings.redis.host, settings.redis.options);
 
 Canvas.DATA = {}; // Where we store all of the canvases
 
-Canvas.BUF_LEN = 2048; // The amount of draws before we save the canvas to redis
-
-Canvas.CANVAS_WIDTH = 800;
-Canvas.CANVAS_HEIGHT = 600;
-
-Canvas.defaultLineWidth = 2;
-Canvas.defaultStrokeStyle = "#000";
-Canvas.defaultFillStyle = "rgba(0,0,0,1)"
+Canvas.defaultLineWidth = settings.canvas.defaultLineWidth;
+Canvas.defaultStrokeStyle = settings.canvas.defaultStrokeStyle;
+Canvas.defaultFillStyle = settings.canvas.defaultFillStyle;
 
 /**
  * Returns a canvas given a room string
@@ -26,7 +22,7 @@ Canvas.getForRoom = function (room, cb) {
 	}
 	// Otherwise, create a new canvas and load it
 	else {
-		var c = new Canvas(Canvas.CANVAS_WIDTH, Canvas.CANVAS_HEIGHT);
+		var c = new Canvas(settings.canvas.width, settings.canvas.height);
 		c.init(room);
 		c.load(function () {
 			cb(c);
@@ -57,7 +53,7 @@ Canvas.prototype.load = function (cb) {
 		// It doesn't exist in redis, fill it then save it
 		if (reply === null) {
 			g.fillStyle = "white";
-			g.fillRect(0, 0, Canvas.CANVAS_WIDTH, Canvas.CANVAS_HEIGHT);
+			g.fillRect(0, 0, settings.canvas.width, settings.canvas.height);
 			
 			canvas.save(function () {
 				if (cb) cb();
