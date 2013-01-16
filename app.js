@@ -197,7 +197,7 @@ io.sockets.on("connection", function (socket) {
 	});
 	
 	socket.on("disconnect", function () {
-		redisClient.hdel(socket.room + ":mice", socket.name);
+		redisClient.hdel(socket.room + ":mice", socket.name, function () {});
     });
 });
 
