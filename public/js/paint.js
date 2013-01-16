@@ -67,6 +67,7 @@ $(function () {
 			}
 			
 			name = localStorage[room + ":name"];
+			socket.emit("name", name);
 		});
 		
 		img.onload = function () {
@@ -301,9 +302,7 @@ $(function () {
 		
 		setInterval(function () {
 			if (Mouse.hasMoved) {
-				var mouseData = {};
-				mouseData[name] = [Mouse.x, Mouse.y, lineWidth, strokeStyle]
-				socket.emit("mouse", mouseData);
+				socket.emit("mouse", [Mouse.x, Mouse.y, lineWidth, strokeStyle]);
 				Mouse.hasMoved = false;
 			}
 		}, 100);

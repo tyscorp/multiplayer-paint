@@ -39,7 +39,6 @@ app.configure("development", function () {
  * Index
  */
 app.get("/", function (req, res) {
-	console.log(req);
 	res.render("index");
 });
 
@@ -81,6 +80,20 @@ app.get("/api/clear/:id", function (req, res) {
 	});
 });
 
+/**
+ *	DEBUG
+ */
+ app.get("/api/debug/clearmice", function (req, res) {
+	res.redirect("/");
+ 
+	redisClient.zrevrange(["latest", 0, -1], function (err, data) {
+
+		for (var i = 0; i < data.length; i++) {
+			redisClient.del(data[i] + ":mice");
+		};
+	});
+});
+
 server.listen(app.get("port"), function () {
 	console.log("Express server listening on port " + app.get("port"));
 });
@@ -105,6 +118,15 @@ io.sockets.on("connection", function (socket) {
 			socket.join(socket.room);
 		}
 	});
+	
+	/**
+	 * Sets the name of the client
+	 */
+	socket.on("name", function (name) {
+		if (socket.room) {
+			socket.name = name;
+		}
+	});
 
 	/**
 	 * Mouse data
@@ -119,8 +141,7 @@ io.sockets.on("connection", function (socket) {
 	 */
 	socket.on("mouse", function (data) {
 		if (socket.room) {
-			var name = Object.keys(data)[0];
-			redisClient.hset(socket.room + ":mice", name, JSON.stringify(data[name]));
+			redisClient.hset(socket.room + ":mice", socket.name, JSON.stringify(data));
 			redisClient.sadd("dirtymice", socket.room);
 		}
 	});
@@ -155,6 +176,10 @@ io.sockets.on("connection", function (socket) {
 			redisClient.zadd("latest", Date.now(), socket.room);
 		}
 	});
+	
+	socket.on("disconnect", function () {
+		redisClient.hdel(socket.room + ":mice", socket.name);
+    });
 });
 
 /**
