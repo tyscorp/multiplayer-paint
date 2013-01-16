@@ -6,7 +6,7 @@ var redis = require("redis");
 var async = require("async");
 
 var Canvas = require("./canvas");
-var redisClient = redis.createClient("6379", "tyscorp.net");
+var redisClient = redis.createClient();
 var app = express();
 var server = http.createServer(app);
 var io = require("socket.io").listen(server, { log: false });
