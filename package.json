@@ -12,6 +12,7 @@
 		"redis": "0.8.x",
 		"hiredis": "0.1.x",
 		"xtend": "*",
-		"async": "*"
+		"async": "*",
+		"moment": "*"
 	}
 }
