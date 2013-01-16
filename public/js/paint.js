@@ -313,17 +313,18 @@ $(function () {
 		if(delta > 0) {
 			if (lineWidth < 75) {
 				lineWidth++;
+				Mouse.hasMoved = true;
 				updateOverlay();
 			}
 		}
 		else {
 			 if (lineWidth > 1) {
 				lineWidth--;
+				Mouse.hasMoved = true;
 				updateOverlay();
 			}
 		}
 	});
-	
 	
 	$("#color").change(function (event) {
 		var color = new RGBColor($(this).val());
