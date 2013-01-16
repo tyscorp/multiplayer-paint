@@ -207,7 +207,7 @@ $(function () {
 			hasMoved: false
 		};
 
-		/*$("canvas").mousedown(function (event) {
+		$("canvas").mousedown(function (event) {
 			var offset = $("#overlay").offset();
 			Mouse.x = event.pageX - offset.left;
 			Mouse.y = event.pageY - offset.top;
@@ -221,7 +221,7 @@ $(function () {
 			
 			lastX = Mouse.x;
 			lastY = Mouse.y;
-		});*/
+		});
 		
 		$("canvas").mouseover(function (event) {
 			var offset = $("#overlay").offset();
@@ -236,8 +236,10 @@ $(function () {
 		});
 		
 		$("body").mousemove(function (event) {
-			Mouse.LEFT = ((event.buttons & 1) === 1);
-			Mouse.RIGHT = ((event.buttons & 2) === 2);
+			if (event.buttons) {
+				Mouse.LEFT = ((event.buttons & 1) === 1);
+				Mouse.RIGHT = ((event.buttons & 2) === 2);
+			}
 			
 			var offset = $("#overlay").offset();
 			Mouse.x = event.pageX - offset.left;
@@ -280,12 +282,12 @@ $(function () {
 				sendLine(lastX, lastY, lastX, lastY);
 			}
 			
-			/*if (event.which == 1) {
+			if (event.which == 1) {
 				Mouse.LEFT = false;
 			}
 			else if (event.which == 3) {
 				Mouse.RIGHT = false;
-			}*/
+			}
 		});
 		
 		setInterval(function () {
