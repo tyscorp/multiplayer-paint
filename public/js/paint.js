@@ -184,7 +184,7 @@ $(function () {
 				ss = "#FFF";
 			}
 			
-			var data = { type: "line", p: [x1, y1, x2, y2, $.extend({ ss: ss, lw: lineWidth }, o)] };
+			var data = { type: "line", p: [x1 + 0.5, y1 + 0.5, x2 + 0.5, y2 + 0.5, $.extend({ ss: ss, lw: lineWidth }, o)] };
 			socket.emit("bufferdata", data);
 			drawData([data]);
 		}
