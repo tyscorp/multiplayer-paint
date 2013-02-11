@@ -5,6 +5,7 @@ var http = require("http");
 var redis = require("redis");
 var async = require("async");
 var moment = require("moment");
+var fs = require("fs");
 
 var settings = require("./settings");
 var Canvas = require("./canvas");
@@ -90,12 +91,50 @@ app.get("/api/canvas/:id", function (req, res) {
  * Clears a canvas given a room name
  */
 app.get("/api/clear/:id", function (req, res) {
+	var canvas = new Canvas(settings.canvas.width, settings.canvas.height);
+	canvas.init(req.params.id);
+	var g = canvas.getContext("2d");
+	g.fillStyle = "#FFF";
+	g.fillRect(0, 0, settings.canvas.width, settings.canvas.height);
+
+	async.parallel([
+		function (callback) {
+			canvas.save(function () {
+				callback();
+			});
+		},
+		function (callback) {
+			redisClient.ltrim(canvas.room + ":buffer", 0, 0, function () {
+				callback();
+			});
+		}
+	], function (err, results) {	
+		console.log("Cleared " + req.params.id);
+		res.redirect("/" + req.params.id);
+	});
+});
+
+app.get("/api/test/:id", function (req, res) {
 	Canvas.getForRoom(req.params.id, function(canvas) {
-		var g = canvas.getContext("2d");
-		g.fillStyle = "#FFF";
-		g.fillRect(0, 0, settings.canvas.width, settings.canvas.height);
-		canvas.flush();
-		res.redirect("/#" + req.params.id);
+		fs.readFile(__dirname + "/public/images/coloris.png", function (err, data) {
+			var g = canvas.getContext("2d");
+		
+			var img = new Canvas.Image();
+				
+			img.onload = function () {
+				g.drawImage(img, 0, 0);
+				
+				canvas.save(function (err, buf) {
+					res.redirect("/" + req.params.id);	
+				});
+			};
+					
+			img.onerror = function (err) {
+				console.log(err);
+			};
+					
+			img.src = data;
+		});
 	});
 });
 
@@ -178,7 +217,9 @@ io.sockets.on("connection", function (socket) {
 			socket.broadcast.to(socket.room).emit("newdata", data);
 			
 			// add the data to the buffer (only used on server restart)
-			redisClient.rpush(socket.room + ":buffer", JSON.stringify(data[0]));
+			redisClient.rpush(socket.room + ":buffer", JSON.stringify(data[0]), function (err) {
+				if (err) console.log(err);
+			});
 
 			Canvas.getForRoom(socket.room, function(canvas) {
 				canvas.draw(data);

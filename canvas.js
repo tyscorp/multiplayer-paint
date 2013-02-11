@@ -61,33 +61,33 @@ Canvas.prototype.load = function (cb) {
 		}
 		else {
 			img = new Canvas.Image();
-			img.src = reply; // !! This is async in browsers but doesn't appear to be here??? wtf
 			img.onload = function () {
-				console.log("loaded!"); // I don't know why this doesn't work D:
-			};
-			g.drawImage(img, 0, 0);
+				g.drawImage(img, 0, 0);
 			
-			// This is to handle the case of a canvas not saved before the server exits
-			redisClient.llen(canvas.room + ":buffer", function (err, length) {
-				if (length > 0) {
-					// Someone is trying to load the canvas at the same time!
-					// I couldn't think of a better solution. It will try to load again in 100ms.
-					// Maybe emit an event "flushed"? Hmm... Will investigate.
-					if (canvas.flushing) {
-						setTimeout(function () {
-							canvas.load();
-						}, 100);
+				// This is to handle the case of a canvas not saved before the server exits
+				redisClient.llen(canvas.room + ":buffer", function (err, length) {
+					if (length > 0) {
+						// Someone is trying to load the canvas at the same time!
+						// I couldn't think of a better solution. It will try to load again in 100ms.
+						// Maybe emit an event "flushed"? Hmm... Will investigate.
+						if (canvas.flushing) {
+							setTimeout(function () {
+								canvas.load();
+							}, 100);
+						}
+						else {
+							canvas.flush(function () {
+								cb();
+							});
+						}
 					}
-					else {
-						canvas.flush(function () {
-							cb();
-						});
+					else if (cb){
+						cb();
 					}
-				}
-				else if (cb){
-					cb();
-				}
-			});
+				});
+			};
+			
+			img.src = reply; // !! This is async in browsers but doesn't appear to be here??? wtf
 		}
 	});
 };
@@ -127,7 +127,9 @@ Canvas.prototype.flush = function (cb) {
 					redisClient.lrange(canvas.room + ":buffer", 0, length, function (err, data) {
 						
 						for (var i = 0; i < data.length; i++) {
+							try {
 							data[i] = JSON.parse(data[i]);
+							}catch(e) {"Error: " + err + " Data: " + console.log(data[i]);}
 						}
 						
 						canvas.draw(data);
@@ -226,6 +228,24 @@ Canvas.prototype.draw = function (actions) {
 					g.moveTo(data.p[0], data.p[1]);
 					g.lineTo(data.p[2], data.p[3]);
 					g.stroke();
+					g.restore();
+					break;
+					
+				case "image":
+					g.save();
+					
+					var img = new Canvas.Image();
+					
+					img.onload = function () {
+						g.drawImage(img, data.i[1], data.i[2]);
+					}
+					
+					img.onerror = function (err) {
+						console.log("Error loading image");
+					}
+					
+					img.src = data.i[0];
+					
 					g.restore();
 					break;
 			}
