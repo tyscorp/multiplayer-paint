@@ -1,24 +1,42 @@
 {
-	"name": "paint",
-	"description": "multiplayer paint",
-	"version": "0.0.1",
-	"private": true,
-	"main": "./app.js",
-	"dependencies": {
-		"express": "3.x",
-		"socket.io": "0.9.x",
-		"ejs": "*",
-		"less-middleware": "*",
-		"canvas": "0.13.x",
-		"redis": "0.8.x",
-		"hiredis": "0.1.x",
-		"xtend": "*",
-		"async": "*",
-		"moment": "*"
-	},
-	
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/tyscorp/multiplayer-paint.git"
+  "name": "paint",
+  "description": "multiplayer paint",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./index.js",
+  "dependencies": {
+    "babel": "^5.5.8",
+    "bluebird": "^2.9.27",
+    "canvas": "^1.2.3",
+    "config": "^1.14.0",
+    "ioredis": "^1.5.0",
+    "koa": "^0.21.0",
+    "koa-router": "^5.1.2",
+    "koa-static": "^1.4.9",
+    "koa-views": "^3.0.0",
+    "lodash": "^3.9.3",
+    "primus": "^3.1.1",
+    "primus-emitter": "^3.1.0",
+    "primus-rooms": "^3.1.0",
+    "sockjs": "^0.3.15"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/tyscorp/multiplayer-paint.git"
+  },
+  "jspm": {
+    "directories": {
+      "baseURL": "public"
+    },
+    "dependencies": {
+      "jquery": "github:components/jquery@^2.1.4",
+      "jquery/jquery-mousewheel": "github:jquery/jquery-mousewheel@^3.1.12",
+      "lodash": "npm:lodash@^3.9.3"
+    },
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.1.13",
+      "babel-runtime": "npm:babel-runtime@^5.1.13",
+      "core-js": "npm:core-js@^0.9.4"
     }
+  }
 }
